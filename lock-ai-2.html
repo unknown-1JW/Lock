@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lock AI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0d0d0d;
+            color: #ececec;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 글리치 배경 - 레이어 1 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 0, 150, 0.03) 0px,
+                rgba(255, 0, 150, 0.03) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            animation: glitch1 0.15s infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 글리치 배경 - 레이어 2 */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                rgba(0, 255, 200, 0.02) 0px,
+                rgba(0, 255, 200, 0.02) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            animation: glitch2 0.25s infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes glitch1 {
+            0% { clip-path: inset(40% 0 61% 0); transform: translate(0); }
+            20% { clip-path: inset(92% 0 1% 0); transform: translate(2px, -2px); }
+            40% { clip-path: inset(43% 0 1% 0); transform: translate(-2px, 2px); }
+            60% { clip-path: inset(25% 0 58% 0); transform: translate(1px, -1px); }
+            80% { clip-path: inset(54% 0 7% 0); transform: translate(-1px, 1px); }
+            100% { clip-path: inset(58% 0 43% 0); transform: translate(0); }
+        }
+
+        @keyframes glitch2 {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-3px); }
+            40% { transform: translateX(3px); }
+            60% { transform: translateX(-1px); }
+            80% { transform: translateX(1px); }
+            100% { transform: translateX(0); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            padding: 16px 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(13, 13, 13, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%);
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .expert-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #ececec;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .expert-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: linear-gradient(135deg, rgba(13, 13, 13, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%);
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .welcome {
+            text-align: center;
+            margin: auto;
+            max-width: 600px;
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 300;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .welcome-text {
+            font-size: 16px;
+            color: #b4bcc7;
+            line-height: 1.6;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 100%;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 10px 16px;
+            border-radius: 8px;
+            line-height: 1.6;
+            font-size: 15px;
+            word-wrap: break-word;
+        }
+
+        .message.bot .message-content {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ececec;
+        }
+
+        .message.user .message-content {
+            background: rgba(0, 200, 150, 0.15);
+            border: 1px solid rgba(0, 200, 150, 0.25);
+            color: #ececec;
+        }
+
+        .input-section {
+            padding: 20px 32px 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(135deg, rgba(13, 13, 13, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .input-field {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #ececec;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .input-field::placeholder {
+            color: #7a8a98;
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #ececec;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .clear-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 80, 80, 0.1);
+            border: 1px solid rgba(255, 80, 80, 0.2);
+            border-radius: 6px;
+            color: #ff5050;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 80, 80, 0.2);
+            border-color: rgba(255, 80, 80, 0.3);
+        }
+
+        .clear-btn.show {
+            display: flex;
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 28px;
+            width: 90%;
+            max-width: 400px;
+            animation: modalSlide 0.2s ease;
+            position: relative;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='50' y='80' width='100' height='80' rx='10'/%3E%3Cpath d='M 80 80 V 60 A 20 20 0 0 1 120 60 V 80'/%3E%3Ccircle cx='100' cy='120' r='6'/%3E%3Cpath d='M 100 120 V 135'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+            background-size: contain;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #ececec;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+            outline: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #ececec;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+            outline: none;
+            resize: vertical;
+            min-height: 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-textarea:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-btn {
+            padding: 8px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #ececec;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn.primary {
+            background: rgba(0, 200, 150, 0.15);
+            border-color: rgba(0, 200, 150, 0.25);
+        }
+
+        .modal-btn.primary:hover {
+            background: rgba(0, 200, 150, 0.25);
+            border-color: rgba(0, 200, 150, 0.4);
+        }
+
+        .modal-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">lock AI</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="clear-btn" id="clearBtn" onclick="clearChat()" title="Delete all chat">C</button>
+                <button class="expert-btn" onclick="openExpert()">⚙</button>
+            </div>
+        </div>
+
+        <div class="messages" id="messages">
+            <div class="welcome">
+                <div class="welcome-title">How can I help?</div>
+                <div class="welcome-text">Ask about any AI term or concept</div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    class="input-field" 
+                    id="input" 
+                    placeholder="Enter a term..."
+                    autocomplete="off"
+                >
+                <button class="send-btn" onclick="send()">→</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 비밀번호 모달 -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-title">Expert Access</div>
+            <input 
+                type="password" 
+                class="modal-input" 
+                id="pwInput" 
+                placeholder="Password"
+            >
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="checkPw()">Enter</button>
+                <button class="modal-btn" onclick="closePw()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teach Me 모달 -->
+    <div class="modal" id="teachModal">
+        <div class="modal-content">
+            <div class="modal-title">teach me</div>
+            <input 
+                type="text" 
+                class="modal-input" 
+                id="teachTerm" 
+                placeholder="Term"
+                readonly
+            >
+            <textarea 
+                class="modal-textarea" 
+                id="teachDef" 
+                placeholder="Enter the definition..."
+            ></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="saveTerm()">Save</button>
+                <button class="modal-btn" onclick="closeTeach()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const VOCAB = {
+            'ai': 'Artificial Intelligence is a computer system that learns patterns from data and makes decisions automatically without explicit programming.',
+            'algorithm': 'A step-by-step procedure for solving a problem or performing a computation.',
+            'deep learning': 'Machine learning technique using artificial neural networks stacked in multiple layers to learn patterns automatically.',
+            'neural network': 'Computational model inspired by biological neurons with interconnected layers of nodes processing information.',
+            'machine learning': 'Branch of AI that creates algorithms learning patterns from data without explicit programming.',
+            'classification': 'Supervised learning task assigning data to predefined categories or classes.',
+            'regression': 'Supervised learning task predicting continuous numerical values.',
+            'clustering': 'Unsupervised learning technique grouping similar data points together.',
+            'supervised learning': 'Learning approach using labeled training data where correct answers are provided.',
+            'unsupervised learning': 'Learning approach discovering patterns in unlabeled data without predefined answers.',
+            'reinforcement learning': 'Learning paradigm where an agent learns by receiving rewards or penalties for actions.',
+            'backpropagation': 'Algorithm calculating gradients by propagating errors backward through a neural network.',
+            'gradient descent': 'Optimization algorithm iteratively reducing loss by moving in steepest descent direction.',
+            'overfitting': 'Model learns training data too well including noise and performs poorly on new data.',
+            'validation': 'Evaluating model performance on a separate dataset during training.',
+            'feature': 'Individual measurable property or characteristic of data used by the model.',
+            'parameter': 'Variable in a model learned during training like weights or bias.',
+            'hyperparameter': 'Configuration variable set before training controlling the learning process.',
+            'loss function': 'Mathematical function measuring difference between predicted and actual values.',
+            'epoch': 'One complete pass through the entire training dataset during model training.',
+            'batch': 'Subset of training data used in one iteration of model training.',
+            'embedding': 'Representation of words, images, or other data as vectors in continuous space.',
+            'cnn': 'Convolutional Neural Network specialized for processing image data.',
+            'rnn': 'Recurrent Neural Network processing sequential data with hidden states.',
+            'lstm': 'Long Short-Term Memory network learning long-term dependencies in sequential data.',
+            'transformer': 'Neural network architecture based on attention mechanisms for sequential processing.',
+            'transfer learning': 'Applying knowledge from one task to improve performance on another task.',
+            'fine-tuning': 'Adapting a pre-trained model to specific task with task-specific training.',
+            'nlp': 'Natural Language Processing enabling computers to understand and generate human language.',
+            'gan': 'Generative Adversarial Network with generator and discriminator learning adversarially.',
+            'inference': 'Using a trained model to make predictions on new unseen data.',
+            'dataset': 'Collection of data samples used to train, validate, or test models.',
+            'model': 'Mathematical representation of learned patterns making predictions.',
+            'training': 'Teaching a model to learn patterns by adjusting parameters iteratively.',
+            'optimization': 'Improving a model by adjusting parameters to minimize loss function.',
+            'precision': 'Ratio of true positives to all predicted positives measuring prediction accuracy.',
+            'recall': 'Ratio of true positives to all actual positives measuring ability to find positives.',
+            'svm': 'Support Vector Machine finding optimal hyperplane to separate classes.',
+            'decision tree': 'Tree-structured algorithm making decisions by recursively splitting data.',
+            'python': 'High-level programming language widely used in AI and machine learning.'
+        };
+
+        let custom = JSON.parse(localStorage.getItem('custom') || '{}');
+        let isExpertMode = false;
+        let currentTeachTerm = '';
+
+        function send() {
+            const inp = document.getElementById('input');
+            const q = inp.value.toLowerCase().trim();
+            
+            if (!q) return;
+
+            addMsg(q, 'user');
+            inp.value = '';
+
+            setTimeout(() => {
+                const all = {...VOCAB, ...custom};
+                
+                if (all[q]) {
+                    addMsg(all[q], 'bot');
+                } else {
+                    const m = Object.entries(all).find(([k]) => k.includes(q));
+                    if (m) {
+                        addMsg(m[1], 'bot');
+                    } else {
+                        if (isExpertMode) {
+                            currentTeachTerm = q;
+                            document.getElementById('teachTerm').value = q;
+                            document.getElementById('teachModal').classList.add('active');
+                            document.getElementById('teachDef').focus();
+                        } else {
+                            addMsg(`I don't have information about "${q}". Please teach me this term in Expert Mode.`, 'bot');
+                        }
+                    }
+                }
+            }, 300);
+
+            inp.focus();
+        }
+
+        function addMsg(text, type) {
+            const container = document.getElementById('messages');
+            
+            if (container.querySelector('.welcome')) {
+                container.innerHTML = '';
+            }
+
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.innerHTML = `<div class="message-content">${text}</div>`;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') send();
+        });
+
+        // Expert 모드
+        function openExpert() {
+            document.getElementById('passwordModal').classList.add('active');
+            document.getElementById('pwInput').focus();
+        }
+
+        function closePw() {
+            document.getElementById('passwordModal').classList.remove('active');
+            document.getElementById('pwInput').value = '';
+        }
+
+        function checkPw() {
+            if (document.getElementById('pwInput').value === 'lock') {
+                closePw();
+                isExpertMode = true;
+                document.getElementById('clearBtn').classList.add('show');
+                document.getElementById('input').focus();
+            } else {
+                alert('Incorrect password');
+                document.getElementById('pwInput').value = '';
+                document.getElementById('pwInput').focus();
+            }
+        }
+
+        function clearChat() {
+            if (confirm('Delete all chat data?')) {
+                const container = document.getElementById('messages');
+                container.innerHTML = `
+                    <div class="welcome">
+                        <div class="welcome-title">How can I help?</div>
+                        <div class="welcome-text">Ask about any AI term or concept</div>
+                    </div>
+                `;
+            }
+        }
+
+        document.getElementById('pwInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPw();
+        });
+
+        // Teach Me 모달
+        function saveTerm() {
+            const def = document.getElementById('teachDef').value.trim();
+            
+            if (!def) {
+                alert('Enter a definition');
+                return;
+            }
+
+            custom[currentTeachTerm] = def;
+            localStorage.setItem('custom', JSON.stringify(custom));
+            
+            closeTeach();
+            addMsg(`Great! I learned "${currentTeachTerm}".`, 'bot');
+        }
+
+        function closeTeach() {
+            document.getElementById('teachModal').classList.remove('active');
+            document.getElementById('teachDef').value = '';
+            currentTeachTerm = '';
+        }
+
+        document.getElementById('teachDef').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                saveTerm();
+            }
+        });
+    </script>
+</body>
+</html>
